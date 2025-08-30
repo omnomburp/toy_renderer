@@ -1,8 +1,9 @@
 #include <cmath>
 #include <cstdlib>
-#include <ctime>
+//#include <ctime>
 
 #include "tgaimage.h"
+#include "model.h"
 
 constexpr TGAColor white =  {.bgra = {255, 255, 255, 255 }};
 constexpr TGAColor green =  {.bgra = {0, 255, 0, 255 }};
@@ -46,20 +47,32 @@ inline void draw_line(int ax, int ay, int bx, int by, TGAImage &framebuffer, TGA
     }
 }
 
+inline void draw_triangle(TGAImage &framebuffer, triple_int coords[3], TGAColor color) {
+    draw_line(coords[0].x, coords[0].y, coords[1].x, coords[1].y, framebuffer, color);
+    draw_line(coords[2].x, coords[2].y, coords[1].x, coords[1].y, framebuffer, color);
+    draw_line(coords[2].x, coords[2].y, coords[0].x, coords[0].y, framebuffer, color);
+}
+
 int main() {
-    constexpr int width = 64;
-    constexpr int height = 64;
+    constexpr int width = 2000;
+    constexpr int height = 2000;
 
     TGAImage framebuffer(width, height, TGAImage::RGB);
 
-    std::srand(std::time({}));
-    for (int i = 0; i < (1 << 24); i++) {
-        int ax = rand()%width, ay = rand()%height;
-        int bx = rand()%width, by = rand()%height;
-        draw_line(ax, ay, bx, by, framebuffer, { static_cast<uint8_t>(rand()%255), static_cast<uint8_t>(rand()%255), static_cast<uint8_t>(rand()%255), static_cast<uint8_t>(rand()%255) });
+    model model;
+
+    if (model.load_model("obj\\diablo3_pose.obj")) {
+        std::cout << "model loaded" << std::endl;
+        
+        for (const auto& face : model.faces) {
+            triple_int coords[3] = { model.vertices[face.x - 1], model.vertices[face.y - 1], model.vertices[face.z - 1] };
+            draw_triangle(framebuffer, coords, red);
+        }
+
+        framebuffer.write_tga_file("framebuffer.tga");
     }
 
-    framebuffer.write_tga_file("framebuffer.tga");
+    
 
     return 0;
 }
