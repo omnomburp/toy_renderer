@@ -16,4 +16,8 @@ Found mistake in interpretation of Waveform obj format and fix.
 
 First attempt at "filling" triangles
 
-![Jank Triangles](progress/day2-2.png)
+![Jank triangles](progress/day2-2.png)
+
+Finished attempt for filling triangles
+
+![Filled triangles](progress/day2-3.png)

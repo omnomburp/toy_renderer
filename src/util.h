@@ -47,49 +47,15 @@ inline void draw_line(int ax, int ay, int bx, int by, TGAImage &framebuffer, TGA
     }
 }
 
-inline std::vector<tup(int, int)> draw_line_with_coords(int ax, int ay, int bx, int by, TGAImage &framebuffer, TGAColor color) noexcept {
-    std::vector<tup(int, int)> res;
-
-    auto steep = std::abs(ax - bx) < std::abs(ay - by);
-
-    if (steep) {
-        swap(ax, ay);
-        swap(bx, by);
-    }
-
-    if (ax > bx) {
-        swap(ax, bx);
-        swap(ay, by);
-    }
-
-    int y = ay;
-    int error = 0;
-
-    for (int x = ax; x <= bx; ++x) {
-
-        if (steep) {
-            framebuffer.set(y, x, color);
-            res.push_back(create_tup(y, x));
-        } else {
-            framebuffer.set(x, y, color);
-            res.push_back(create_tup(x, y));
-        }
-            
-        error += 2 * std::abs(by - ay);
-
-        const int mask = error > bx - ax;
-        y += (by > ay ? 1 : -1) * mask;
-        error -= 2 * (bx - ax) * mask;
-    }
-
-    return res;
-}
-
 inline void triangle(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &framebuffer, TGAColor color) noexcept {
-    // sort by highest y axis
     if (ay < by) {
         swap(ay, by);
         swap(ax, bx);
+    }
+
+    if (ay < cy) {
+        swap(ay, cy);
+        swap(ax, cx);
     }
 
     if (by < cy) {
@@ -97,22 +63,31 @@ inline void triangle(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &f
         swap(bx, cx);
     } 
 
-    if (ay < cy) {
-        swap(ay, cy);
-        swap(ax, cx);
+    const int total_height = ay - cy;
+
+    if (ay != by) {
+        const int segment_height = ay - by;
+
+        for (int y = by; y <= ay; ++y) {
+            int x1 = cx + ((ax - cx)*(y - cy)) / total_height;
+            int x2 = bx + ((ax - bx)*(y - by)) / segment_height;
+            
+            for (int x = std::min(x1, x2); x < std::max(x1, x2); ++x) {
+                framebuffer.set(x, y, color);
+            }
+        }
     }
 
-    // draw lines between the equal y axis from top down
+    if (cy != by) {
+        const int segment_height = by - cy;
 
-    auto longest = draw_line_with_coords(ax, ay, cx, cy, framebuffer, color); // longest line has all the y axis possible
-
-    // need all the y axis from these 2
-    auto middle = draw_line_with_coords(ax, ay, bx, by, framebuffer, color);
-    auto shortest = draw_line_with_coords(bx, by, cx, cy, framebuffer, color);
-
-    middle.insert(middle.end(), shortest.begin(), shortest.end());
-
-    for (int i = 0; i < longest.size(); ++i) {
-        draw_line(std::get<0>(longest[i]), std::get<1>(longest[i]), std::get<0>(middle[i]), std::get<1>(middle[i]), framebuffer, color);
+        for (int y = cy; y <= by; ++y) {
+            int x1 = cx + ((ax - cx)*(y - cy)) / total_height;
+            int x2 = cx + ((bx - cx)*(y - cy)) / segment_height;
+            
+            for (int x = std::min(x1, x2); x < std::max(x1, x2); ++x) {
+                framebuffer.set(x, y, color);
+            }
+        }
     }
 }
