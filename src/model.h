@@ -1,10 +1,14 @@
 #pragma once
 
+#include <tuple>
 #include <vector>
 #include <string>
 #include <iostream>
 #include <sstream>
 #include <fstream>
+
+#include "tgaimage.h"
+#include "util.h"
 
 struct vec3 {
     float x;
@@ -58,6 +62,22 @@ struct model {
         return true;
     }
 
+    inline void draw_model(model &model, TGAImage &framebuffer, TGAColor color, const int width, const int height) {
+        if (model.load_model("obj\\diablo3_pose.obj")) {
+            std::cout << "model loaded" << std::endl;        
+
+            const int model_face_size = model.faces.size() / 3;
+
+            for (int i = 0; i < model_face_size; ++i) {
+                const auto face = &model.faces[i * 3];
+                vec3 coords[3] = { model.vertices[*face], model.vertices[*(face + 1)], model.vertices[*(face + 2)]};
+                draw_triangle(framebuffer, coords, color, width, height);
+            }
+
+            framebuffer.write_tga_file("framebuffer.tga");
+        }
+    }
+
 private:
     inline std::vector<std::string> split_string_by_token(const std::string& line, char token) {
         std::vector<std::string> tokens;
@@ -77,5 +97,21 @@ private:
         }
 
         return tokens;
+    }
+
+    inline std::tuple<int, int> project(const vec3 coord, const int width, const int height) noexcept {
+        return {
+            static_cast<int>((coord.x + 1.) * width / 2),
+            static_cast<int>((coord.y + 1.) * height / 2)   
+        };
+    }
+
+    inline void draw_triangle(TGAImage &framebuffer, const vec3 coords[3], const TGAColor color, const int width, const int height) noexcept {
+        auto [ax, ay] = project(coords[0], width, height);
+        auto [bx, by] = project(coords[1], width, height);
+        auto [cx, cy] = project(coords[2], width, height);
+        draw_line(ax, ay, bx, by, framebuffer, color);
+        draw_line(bx, by, cx, cy, framebuffer, color);
+        draw_line(cx, cy, ax, ay, framebuffer, color);
     }
 };
