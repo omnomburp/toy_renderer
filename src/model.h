@@ -6,17 +6,17 @@
 #include <sstream>
 #include <fstream>
 
-struct triple_int {
-    int x;
-    int y;
-    int z;
+struct vec3 {
+    float x;
+    float y;
+    float z;
 };
 
 struct model {
-    std::vector<triple_int> vertices;
-    std::vector<triple_int> faces;
+    std::vector<vec3> vertices;
+    std::vector<int> faces;
 
-    bool load_model(const std::string& file_path) {
+    bool load_model(const std::string& file_path) noexcept {
         std::ifstream file(file_path);
         if (!file) {
             std::cerr << "Can't load model " << file_path << std::endl;
@@ -34,12 +34,12 @@ struct model {
                 float x, y, z;
                 iss >> v >> x >> y >> z;
 
-                triple_int vertex = {
-                    static_cast<int>((x + 1) * 1000),
-                    static_cast<int>((y + 1) * 1000),
-                    static_cast<int>((z + 1) * 1000)
+                vec3 vertex = {
+                    x,
+                    y,
+                    z
                 };
-                vertices.push_back(vertex);
+                vertices.emplace_back(vertex);
 
             } else if (line.rfind("f ", 0) == 0) {
                 char f;
@@ -50,13 +50,9 @@ struct model {
                     return std::stoi(token.substr(0, token.find('/')));
                 };
 
-                triple_int face = {
-                    parse_index(v1),
-                    parse_index(v2),
-                    parse_index(v3)
-                };
-
-                faces.push_back(face);
+                faces.push_back(parse_index(v1) - 1);
+                faces.push_back(parse_index(v2) - 1);
+                faces.push_back(parse_index(v3) - 1);
             }
         }
         return true;
