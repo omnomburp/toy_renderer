@@ -26,3 +26,7 @@ Finished attempt for filling triangles
 Drawing model with filled triangles
 
 ![Filled model](progress/day3-1.png)
+
+Playing around with colors and alpha values
+
+![Rainbow triangle](progress/day3-2.png)

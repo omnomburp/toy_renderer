@@ -51,7 +51,7 @@ inline void draw_line(int ax, int ay, int bx, int by, TGAImage &framebuffer, TGA
     }
 }
 
-inline void filled_triangle(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &framebuffer, TGAColor color) noexcept {
+inline void filled_triangle(int ax, int ay, int az, int bx, int by, int bz, int cx, int cy, int cz, TGAImage &framebuffer, TGAColor color) noexcept {
     int min_x = std::min(std::min(ax, bx), cx);
     int max_x = std::max(std::max(ax, bx), cx);
     int min_y = std::min(std::min(ay, by), cy);
@@ -62,8 +62,8 @@ inline void filled_triangle(int ax, int ay, int bx, int by, int cx, int cy, TGAI
     if (total_area < 1) return;
 
     #pragma omp parallel for
-    for (int x = min_x; x < max_x; ++x) {
-        for (int y = min_y; y < max_y; ++y) {
+    for (int x = min_x; x <= max_x; ++x) {
+        for (int y = min_y; y <= max_y; ++y) {
 
             const double a = triangle_area(x, y, bx, by, cx, cy) / total_area;
             const double b = triangle_area(ax, ay, x, y, cx, cy) / total_area;
@@ -73,7 +73,9 @@ inline void filled_triangle(int ax, int ay, int bx, int by, int cx, int cy, TGAI
                 continue;
             }
 
-            framebuffer.set(x, y, color);
+            auto z = static_cast<unsigned char>(a * b * c * 255);
+
+            framebuffer.set(x, y, {(unsigned char)(255 * a), (unsigned char)(255 * b), (unsigned char)(255 * c), z});
         }
     }    
 }
