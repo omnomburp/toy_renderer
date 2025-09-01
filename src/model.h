@@ -36,7 +36,7 @@ struct model {
                 TGAColor rnd;
                 for (int c=0; c<3; c++) rnd[c] = std::rand()%255;
 
-                filled_triangle(ax, ay, bx, by, cx, cy, framebuffer, rnd);
+                //filled_triangle(ax, ay, bx, by, cx, cy, framebuffer, rnd);
             }
 
             framebuffer.write_tga_file("framebuffer.tga");

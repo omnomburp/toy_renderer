@@ -30,3 +30,7 @@ Drawing model with filled triangles
 Playing around with colors and alpha values
 
 ![Rainbow triangle](progress/day3-2.png)
+
+"Wireframe" without calling line()
+
+![Wireframe rainbow triangle](progress/day3-3.png)

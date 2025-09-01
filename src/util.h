@@ -73,6 +73,10 @@ inline void filled_triangle(int ax, int ay, int az, int bx, int by, int bz, int 
                 continue;
             }
 
+            if (a >= 0.05 && b >= 0.05 && c >= 0.05) {
+                continue;
+            }
+
             auto z = static_cast<unsigned char>(a * b * c * 255);
 
             framebuffer.set(x, y, {(unsigned char)(255 * a), (unsigned char)(255 * b), (unsigned char)(255 * c), z});
