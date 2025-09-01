@@ -58,6 +58,9 @@ inline void filled_triangle(int ax, int ay, int bx, int by, int cx, int cy, TGAI
     int max_y = std::max(std::max(ay, by), cy);
 
     const double total_area = triangle_area(ax, ay, bx, by, cx, cy);
+
+    if (total_area < 1) return;
+
     #pragma omp parallel for
     for (int x = min_x; x < max_x; ++x) {
         for (int y = min_y; y < max_y; ++y) {

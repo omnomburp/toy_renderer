@@ -22,6 +22,7 @@ Finished attempt for filling triangles
 
 ![Filled triangles](progress/day2-3.png)
 
+### Day 3
 Drawing model with filled triangles
 
 ![Filled model](progress/day3-1.png)
