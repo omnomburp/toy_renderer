@@ -20,6 +20,57 @@ struct model {
     std::vector<vec3> vertices;
     std::vector<int> faces;
 
+    inline void draw_model(model &model, TGAImage &framebuffer, const int width, const int height) {
+        if (model.load_model("obj\\diablo3_pose.obj")) {
+            std::cout << "model loaded" << std::endl;        
+
+            const int model_face_size = model.faces.size() / 3;
+
+            for (int i = 0; i < model_face_size; ++i) {
+                const auto face = &model.faces[i * 3];
+                vec3 coords[3] = { model.vertices[*face], model.vertices[*(face + 1)], model.vertices[*(face + 2)]};
+                auto [ax, ay] = project(coords[0], width, height);
+                auto [bx, by] = project(coords[1], width, height);
+                auto [cx, cy] = project(coords[2], width, height);
+
+                TGAColor rnd;
+                for (int c=0; c<3; c++) rnd[c] = std::rand()%255;
+
+                filled_triangle(ax, ay, bx, by, cx, cy, framebuffer, rnd);
+            }
+
+            framebuffer.write_tga_file("framebuffer.tga");
+        }
+    }
+
+private:
+    inline std::vector<std::string> split_string_by_token(const std::string& line, char token) {
+        std::vector<std::string> tokens;
+        const char* begin = line.c_str();
+        const char* end = begin + line.size();
+        const char* word_start = nullptr;
+
+        for (const char* p = begin; p <= end; ++p) {
+            if (*p == token) {
+                if (word_start) {
+                    tokens.emplace_back(word_start, p - word_start);
+                    word_start = nullptr;
+                }
+            } else if (!word_start) {
+                word_start = p;
+            }
+        }
+
+        return tokens;
+    }
+
+    inline std::tuple<int, int> project(const vec3 coord, const int width, const int height) noexcept {
+        return {
+            static_cast<int>((coord.x + 1.) * width / 2),
+            static_cast<int>((coord.y + 1.) * height / 2)   
+        };
+    }
+
     bool load_model(const std::string& file_path) noexcept {
         std::ifstream file(file_path);
         if (!file) {
@@ -60,58 +111,5 @@ struct model {
             }
         }
         return true;
-    }
-
-    inline void draw_model(model &model, TGAImage &framebuffer, TGAColor color, const int width, const int height) {
-        if (model.load_model("obj\\diablo3_pose.obj")) {
-            std::cout << "model loaded" << std::endl;        
-
-            const int model_face_size = model.faces.size() / 3;
-
-            for (int i = 0; i < model_face_size; ++i) {
-                const auto face = &model.faces[i * 3];
-                vec3 coords[3] = { model.vertices[*face], model.vertices[*(face + 1)], model.vertices[*(face + 2)]};
-                draw_triangle(framebuffer, coords, color, width, height);
-            }
-
-            framebuffer.write_tga_file("framebuffer.tga");
-        }
-    }
-
-private:
-    inline std::vector<std::string> split_string_by_token(const std::string& line, char token) {
-        std::vector<std::string> tokens;
-        const char* begin = line.c_str();
-        const char* end = begin + line.size();
-        const char* word_start = nullptr;
-
-        for (const char* p = begin; p <= end; ++p) {
-            if (*p == token) {
-                if (word_start) {
-                    tokens.emplace_back(word_start, p - word_start);
-                    word_start = nullptr;
-                }
-            } else if (!word_start) {
-                word_start = p;
-            }
-        }
-
-        return tokens;
-    }
-
-    inline std::tuple<int, int> project(const vec3 coord, const int width, const int height) noexcept {
-        return {
-            static_cast<int>((coord.x + 1.) * width / 2),
-            static_cast<int>((coord.y + 1.) * height / 2)   
-        };
-    }
-
-    inline void draw_triangle(TGAImage &framebuffer, const vec3 coords[3], const TGAColor color, const int width, const int height) noexcept {
-        auto [ax, ay] = project(coords[0], width, height);
-        auto [bx, by] = project(coords[1], width, height);
-        auto [cx, cy] = project(coords[2], width, height);
-        draw_line(ax, ay, bx, by, framebuffer, color);
-        draw_line(bx, by, cx, cy, framebuffer, color);
-        draw_line(cx, cy, ax, ay, framebuffer, color);
     }
 };

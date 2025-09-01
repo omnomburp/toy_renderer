@@ -9,6 +9,10 @@
 #define tup(...) std::tuple<__VA_ARGS__>
 #define create_tup(...) std::make_tuple(__VA_ARGS__)
 
+inline double triangle_area(int ax, int ay, int bx, int by, int cx, int cy) {
+    return .5*((by - ay) * (bx + ax) + (cy - by) * (cx + bx) + (ay - cy) * (ax + cx));
+}
+
 inline void swap(int &a, int &b) noexcept {
     int temp = a;
     a = b;
@@ -47,47 +51,26 @@ inline void draw_line(int ax, int ay, int bx, int by, TGAImage &framebuffer, TGA
     }
 }
 
-inline void triangle(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &framebuffer, TGAColor color) noexcept {
-    if (ay < by) {
-        swap(ay, by);
-        swap(ax, bx);
-    }
+inline void filled_triangle(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &framebuffer, TGAColor color) noexcept {
+    int min_x = std::min(std::min(ax, bx), cx);
+    int max_x = std::max(std::max(ax, bx), cx);
+    int min_y = std::min(std::min(ay, by), cy);
+    int max_y = std::max(std::max(ay, by), cy);
 
-    if (ay < cy) {
-        swap(ay, cy);
-        swap(ax, cx);
-    }
+    const double total_area = triangle_area(ax, ay, bx, by, cx, cy);
+    #pragma omp parallel for
+    for (int x = min_x; x < max_x; ++x) {
+        for (int y = min_y; y < max_y; ++y) {
 
-    if (by < cy) {
-        swap(by, cy);
-        swap(bx, cx);
-    } 
+            const double a = triangle_area(x, y, bx, by, cx, cy) / total_area;
+            const double b = triangle_area(ax, ay, x, y, cx, cy) / total_area;
+            const double c = triangle_area(ax, ay, bx, by, x, y) / total_area;
 
-    const int total_height = ay - cy;
-
-    if (ay != by) {
-        const int segment_height = ay - by;
-
-        for (int y = by; y <= ay; ++y) {
-            int x1 = cx + ((ax - cx)*(y - cy)) / total_height;
-            int x2 = bx + ((ax - bx)*(y - by)) / segment_height;
-            
-            for (int x = std::min(x1, x2); x < std::max(x1, x2); ++x) {
-                framebuffer.set(x, y, color);
+            if (a < 0 || b < 0 || c < 0) {
+                continue;
             }
-        }
-    }
 
-    if (cy != by) {
-        const int segment_height = by - cy;
-
-        for (int y = cy; y <= by; ++y) {
-            int x1 = cx + ((ax - cx)*(y - cy)) / total_height;
-            int x2 = cx + ((bx - cx)*(y - cy)) / segment_height;
-            
-            for (int x = std::min(x1, x2); x < std::max(x1, x2); ++x) {
-                framebuffer.set(x, y, color);
-            }
+            framebuffer.set(x, y, color);
         }
-    }
+    }    
 }

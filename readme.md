@@ -21,3 +21,7 @@ First attempt at "filling" triangles
 Finished attempt for filling triangles
 
 ![Filled triangles](progress/day2-3.png)
+
+Drawing model with filled triangles
+
+![Filled model](progress/day3-1.png)
