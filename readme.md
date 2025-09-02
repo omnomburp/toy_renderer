@@ -39,3 +39,7 @@ Playing around with colors and alpha values
 Cull triangles that are backfacing
 
 ![Grayscale Depth Buffer](progress/day4-1.png)
+
+Rotate model
+
+![Rotated model](progress/day4-2.png)

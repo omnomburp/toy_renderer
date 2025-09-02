@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "tgaimage.h"
+#include "types.h"
 
 #define tup(...) std::tuple<__VA_ARGS__>
 #define create_tup(...) std::make_tuple(__VA_ARGS__)
@@ -17,6 +18,13 @@ inline void swap(int &a, int &b) noexcept {
     int temp = a;
     a = b;
     b = temp;
+}
+
+inline vec3 rot(vec3 v) {
+    constexpr double a = 3.14159265358979323846 / 6.0;
+    const mat3 ry = {{{ (float)std::cos(a), 0, (float)std::sin(a)}, {0,1,0}, { (float)-std::sin(a), 0, (float)std::cos(a)}}};
+
+    return ry * v;
 }
 
 inline void draw_line(int ax, int ay, int bx, int by, TGAImage &framebuffer, TGAColor color) noexcept {
