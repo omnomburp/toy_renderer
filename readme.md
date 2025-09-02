@@ -34,3 +34,8 @@ Playing around with colors and alpha values
 "Wireframe" without calling line()
 
 ![Wireframe rainbow triangle](progress/day3-3.png)
+
+### Day 4
+Cull triangles that are backfacing
+
+![Grayscale Depth Buffer](progress/day4-1.png)

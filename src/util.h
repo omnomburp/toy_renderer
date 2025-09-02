@@ -51,7 +51,7 @@ inline void draw_line(int ax, int ay, int bx, int by, TGAImage &framebuffer, TGA
     }
 }
 
-inline void filled_triangle(int ax, int ay, int az, int bx, int by, int bz, int cx, int cy, int cz, TGAImage &framebuffer, TGAColor color) noexcept {
+inline void filled_triangle(int ax, int ay, int az, int bx, int by, int bz, int cx, int cy, int cz, TGAImage &framebuffer, TGAImage &zbuffer, TGAColor color) noexcept {
     int min_x = std::min(std::min(ax, bx), cx);
     int max_x = std::max(std::max(ax, bx), cx);
     int min_y = std::min(std::min(ay, by), cy);
@@ -73,13 +73,13 @@ inline void filled_triangle(int ax, int ay, int az, int bx, int by, int bz, int 
                 continue;
             }
 
-            if (a >= 0.05 && b >= 0.05 && c >= 0.05) {
-                continue;
-            }
+            unsigned char z = static_cast<unsigned char>(a * az + b * bz + c * cz);
 
-            auto z = static_cast<unsigned char>(a * b * c * 255);
+            if (z <= zbuffer.get(x, y)[0]) continue;
+            
+            zbuffer.set(x, y, {z, z, z, z});
 
-            framebuffer.set(x, y, {(unsigned char)(255 * a), (unsigned char)(255 * b), (unsigned char)(255 * c), z});
+            framebuffer.set(x, y, color);
         }
     }    
 }

@@ -20,26 +20,28 @@ struct model {
     std::vector<vec3> vertices;
     std::vector<int> faces;
 
-    inline void draw_model(model &model, TGAImage &framebuffer, const int width, const int height) {
-        if (model.load_model("obj\\diablo3_pose.obj")) {
-            std::cout << "model loaded" << std::endl;        
+    inline void draw_model(TGAImage &framebuffer, const int width, const int height) {
+        if (load_model("obj\\diablo3_pose.obj")) {
+            std::cout << "model loaded" << std::endl;       
+            auto zbuffer = TGAImage(width, height, TGAImage::GRAYSCALE); 
 
-            const int model_face_size = model.faces.size() / 3;
+            const int model_face_size = faces.size() / 3;
 
             for (int i = 0; i < model_face_size; ++i) {
-                const auto face = &model.faces[i * 3];
-                vec3 coords[3] = { model.vertices[*face], model.vertices[*(face + 1)], model.vertices[*(face + 2)]};
-                auto [ax, ay] = project(coords[0], width, height);
-                auto [bx, by] = project(coords[1], width, height);
-                auto [cx, cy] = project(coords[2], width, height);
+                const auto face = &faces[i * 3];
+                vec3 coords[3] = { vertices[*face], vertices[*(face + 1)], vertices[*(face + 2)]};
+                auto [ax, ay, az] = project(coords[0], width, height);
+                auto [bx, by, bz] = project(coords[1], width, height);
+                auto [cx, cy, cz] = project(coords[2], width, height);
 
                 TGAColor rnd;
                 for (int c=0; c<3; c++) rnd[c] = std::rand()%255;
 
-                //filled_triangle(ax, ay, bx, by, cx, cy, framebuffer, rnd);
+                filled_triangle(ax, ay, az, bx, by, bz, cx, cy, cz, framebuffer, zbuffer, rnd);
             }
 
             framebuffer.write_tga_file("framebuffer.tga");
+            zbuffer.write_tga_file("zbuffer.tga");
         }
     }
 
@@ -64,10 +66,11 @@ private:
         return tokens;
     }
 
-    inline std::tuple<int, int> project(const vec3 coord, const int width, const int height) noexcept {
+    inline std::tuple<int, int, int> project(const vec3 coord, const int width, const int height) noexcept {
         return {
             static_cast<int>((coord.x + 1.) * width / 2),
-            static_cast<int>((coord.y + 1.) * height / 2)   
+            static_cast<int>((coord.y + 1.) * height / 2),
+            static_cast<int>((coord.z + 1.) * 255. / 2)   
         };
     }
 
