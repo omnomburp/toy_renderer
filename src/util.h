@@ -78,6 +78,7 @@ inline void filled_triangle(int ax, int ay, int az, int bx, int by, int bz, int 
     for (int x = min_x; x <= max_x; ++x) {
         for (int y = min_y; y <= max_y; ++y) {
 
+            // for checking if the point is in the triangle
             const double a = triangle_area(x, y, bx, by, cx, cy) / total_area;
             const double b = triangle_area(ax, ay, x, y, cx, cy) / total_area;
             const double c = triangle_area(ax, ay, bx, by, x, y) / total_area;
@@ -85,7 +86,7 @@ inline void filled_triangle(int ax, int ay, int az, int bx, int by, int bz, int 
             if (a < 0 || b < 0 || c < 0) {
                 continue;
             }
-
+            
             unsigned char z = static_cast<unsigned char>(a * az + b * bz + c * cz);
 
             if (z <= zbuffer.get(x, y)[0]) continue;

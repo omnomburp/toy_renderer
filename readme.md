@@ -48,3 +48,7 @@ Rotate model
 Hand of the model is clipped after central projection
 
 ![Clipped model](progress/day5-1.png)
+
+Applying rotation later helped abit but still clipping abit
+
+![Less clipped model](progress/day5-2.png)
