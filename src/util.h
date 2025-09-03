@@ -20,11 +20,16 @@ inline void swap(int &a, int &b) noexcept {
     b = temp;
 }
 
-inline vec3 rot(vec3 v) {
+inline vec3 rot(vec3 v) noexcept {
     constexpr double a = 3.14159265358979323846 / 6.0;
     const mat3 ry = {{{ (float)std::cos(a), 0, (float)std::sin(a)}, {0,1,0}, { (float)-std::sin(a), 0, (float)std::cos(a)}}};
 
     return ry * v;
+}
+
+inline vec3 persp(vec3 v) noexcept {
+    constexpr double c = 3.;
+    return v / (1-v.z/c);
 }
 
 inline void draw_line(int ax, int ay, int bx, int by, TGAImage &framebuffer, TGAColor color) noexcept {

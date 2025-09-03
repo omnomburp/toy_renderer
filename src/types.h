@@ -7,6 +7,10 @@ struct vec3 {
 	float x;
 	float y;
 	float z;
+
+    inline vec3 operator/(float rhs) const {
+        return { (x * 1/rhs), (y * 1/rhs), (z * 1/rhs) }; 
+    }
 };
 
 struct mat3 {

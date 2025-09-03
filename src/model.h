@@ -25,9 +25,9 @@ struct model {
             for (int i = 0; i < model_face_size; ++i) {
                 const auto face = &faces[i * 3];
                 vec3 coords[3] = { vertices[*face], vertices[*(face + 1)], vertices[*(face + 2)]};
-                auto [ax, ay, az] = project(rot(coords[0]), width, height);
-                auto [bx, by, bz] = project(rot(coords[1]), width, height);
-                auto [cx, cy, cz] = project(rot(coords[2]), width, height);
+                auto [ax, ay, az] = project(persp(rot(coords[0])), width, height);
+                auto [bx, by, bz] = project(persp(rot(coords[1])), width, height);
+                auto [cx, cy, cz] = project(persp(rot(coords[2])), width, height);
 
                 TGAColor rnd;
                 for (int c=0; c<3; c++) rnd[c] = std::rand()%255;

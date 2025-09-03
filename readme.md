@@ -43,3 +43,8 @@ Cull triangles that are backfacing
 Rotate model
 
 ![Rotated model](progress/day4-2.png)
+
+### Day 5
+Hand of the model is clipped after central projection
+
+![Clipped model](progress/day5-1.png)
