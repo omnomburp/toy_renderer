@@ -18,7 +18,7 @@ struct model {
     inline void draw_model(TGAImage &framebuffer, const int width, const int height) {
         if (load_model("obj\\diablo3_pose.obj")) {
             std::cout << "model loaded" << std::endl;       
-            auto zbuffer = TGAImage(width, height, TGAImage::GRAYSCALE); 
+            std::vector<float> zbuffer(width * height, std::numeric_limits<float>::lowest()); 
 
             const int model_face_size = faces.size() / 3;
 
@@ -32,11 +32,10 @@ struct model {
                 TGAColor rnd;
                 for (int c=0; c<3; c++) rnd[c] = std::rand()%255;
 
-                filled_triangle(ax, ay, az, bx, by, bz, cx, cy, cz, framebuffer, zbuffer, rnd);
+                filled_triangle(ax, ay, az, bx, by, bz, cx, cy, cz, framebuffer, zbuffer, width, height, rnd);
             }
 
             framebuffer.write_tga_file("framebuffer.tga");
-            zbuffer.write_tga_file("zbuffer.tga");
         }
     }
 

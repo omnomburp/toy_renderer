@@ -6,6 +6,7 @@
 
 #include "tgaimage.h"
 #include "types.h"
+#include <cstring>
 
 #define tup(...) std::tuple<__VA_ARGS__>
 #define create_tup(...) std::make_tuple(__VA_ARGS__)
@@ -64,7 +65,7 @@ inline void draw_line(int ax, int ay, int bx, int by, TGAImage &framebuffer, TGA
     }
 }
 
-inline void filled_triangle(int ax, int ay, int az, int bx, int by, int bz, int cx, int cy, int cz, TGAImage &framebuffer, TGAImage &zbuffer, TGAColor color) noexcept {
+inline void filled_triangle(int ax, int ay, int az, int bx, int by, int bz, int cx, int cy, int cz, TGAImage &framebuffer, std::vector<float> &zbuffer, const int width, const int height, TGAColor color) {
     int min_x = std::min(std::min(ax, bx), cx);
     int max_x = std::max(std::max(ax, bx), cx);
     int min_y = std::min(std::min(ay, by), cy);
@@ -87,11 +88,13 @@ inline void filled_triangle(int ax, int ay, int az, int bx, int by, int bz, int 
                 continue;
             }
             
-            unsigned char z = static_cast<unsigned char>(a * az + b * bz + c * cz);
+            float z = static_cast<float>(a * az + b * bz + c * cz);
 
-            if (z <= zbuffer.get(x, y)[0]) continue;
+            const auto idx = x + y * width;
+
+            if (z <= zbuffer[idx]) continue;
             
-            zbuffer.set(x, y, {z, z, z, z});
+            memcpy(zbuffer.data() + idx, &z, sizeof(float));
 
             framebuffer.set(x, y, color);
         }

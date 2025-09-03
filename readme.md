@@ -52,3 +52,7 @@ Hand of the model is clipped after central projection
 Applying rotation later helped abit but still clipping abit
 
 ![Less clipped model](progress/day5-2.png)
+
+Store z buffer as a vector of floats instead
+
+![Diablo model](progress/day5-3.png)
