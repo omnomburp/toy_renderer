@@ -15,32 +15,47 @@ struct model {
     std::vector<vec3> vertices;
     std::vector<int> faces;
 
-    inline void draw_model(TGAImage &framebuffer, const int width, const int height) {
-        if (load_model("obj\\diablo3_pose.obj")) {
-            std::cout << "model loaded" << std::endl;       
-            std::vector<float> zbuffer(width * height, std::numeric_limits<float>::lowest()); 
+    bool load_model(const std::string& file_path) noexcept {
+    std::ifstream file(file_path);
+    if (!file) {
+        std::cerr << "Can't load model " << file_path << std::endl;
+        return false;
+    }
 
-            const int model_face_size = faces.size() / 3;
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.empty() || line[0] == '#') continue;
 
-            for (int i = 0; i < model_face_size; ++i) {
-                const auto face = &faces[i * 3];
-                vec3 coords[3] = { vertices[*face], vertices[*(face + 1)], vertices[*(face + 2)]};
+        std::istringstream iss(line);
 
-                mat4 view_port, model_view, perspective;
+        if (line.rfind("v ", 0) == 0) {
+            char v;
+            float x, y, z;
+            iss >> v >> x >> y >> z;
 
-                auto [ax, ay, az] = project(rot(persp(coords[0])), width, height);
-                auto [bx, by, bz] = project(rot(persp(coords[1])), width, height);
-                auto [cx, cy, cz] = project(rot(persp(coords[2])), width, height);
+            vec3 vertex = {
+                x,
+                y,
+                z
+            };
+            vertices.emplace_back(vertex);
 
-                TGAColor rnd;
-                for (int c=0; c<3; c++) rnd[c] = std::rand()%255;
+        } else if (line.rfind("f ", 0) == 0) {
+            char f;
+            std::string v1, v2, v3;
+            iss >> f >> v1 >> v2 >> v3;
 
-                filled_triangle(ax, ay, az, bx, by, bz, cx, cy, cz, framebuffer, zbuffer, width, height, rnd);
-            }
+            auto parse_index = [](const std::string& token) {
+                return std::stoi(token.substr(0, token.find('/')));
+            };
 
-            framebuffer.write_tga_file("framebuffer.tga");
+            faces.push_back(parse_index(v1) - 1);
+            faces.push_back(parse_index(v2) - 1);
+            faces.push_back(parse_index(v3) - 1);
         }
     }
+    return true;
+}
 
 private:
     inline std::vector<std::string> split_string_by_token(const std::string& line, char token) {
@@ -65,51 +80,10 @@ private:
 
     inline std::tuple<int, int, int> project(const vec3 coord, const int width, const int height) noexcept {
         return {
-            static_cast<int>((coord.x + 1.) * width / 2),
-            static_cast<int>((coord.y + 1.) * height / 2),
-            static_cast<int>((coord.z + 1.) * 255. / 2)   
+            static_cast<int>((coord[0] + 1.) * width / 2),
+            static_cast<int>((coord[1] + 1.) * height / 2),
+            static_cast<int>((coord[2] + 1.) * 255. / 2)   
         };
     }
 
-    bool load_model(const std::string& file_path) noexcept {
-        std::ifstream file(file_path);
-        if (!file) {
-            std::cerr << "Can't load model " << file_path << std::endl;
-            return false;
-        }
-
-        std::string line;
-        while (std::getline(file, line)) {
-            if (line.empty() || line[0] == '#') continue;
-
-            std::istringstream iss(line);
-
-            if (line.rfind("v ", 0) == 0) {
-                char v;
-                float x, y, z;
-                iss >> v >> x >> y >> z;
-
-                vec3 vertex = {
-                    x,
-                    y,
-                    z
-                };
-                vertices.emplace_back(vertex);
-
-            } else if (line.rfind("f ", 0) == 0) {
-                char f;
-                std::string v1, v2, v3;
-                iss >> f >> v1 >> v2 >> v3;
-
-                auto parse_index = [](const std::string& token) {
-                    return std::stoi(token.substr(0, token.find('/')));
-                };
-
-                faces.push_back(parse_index(v1) - 1);
-                faces.push_back(parse_index(v2) - 1);
-                faces.push_back(parse_index(v3) - 1);
-            }
-        }
-        return true;
-    }
 };

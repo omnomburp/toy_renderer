@@ -1,8 +1,10 @@
 #pragma once
 
+#include <cmath>
 #include <cstdlib>
 #include <tuple>
 #include <vector>
+#include <algorithm>
 
 #include "tgaimage.h"
 #include "types.h"
@@ -20,18 +22,6 @@ inline void swap(int &a, int &b) noexcept {
     int temp = a;
     a = b;
     b = temp;
-}
-
-inline vec3 rot(vec3 v) noexcept {
-    constexpr double a = PI / 6.0;
-    const mat3 ry = {{{ (float)std::cos(a), 0, (float)std::sin(a)}, {0,1,0}, { (float)-std::sin(a), 0, (float)std::cos(a)}}};
-
-    return ry * v;
-}
-
-inline vec3 persp(vec3 v) noexcept {
-    constexpr double c = 3.;
-    return v / (1-v.z/c);
 }
 
 inline void draw_line(int ax, int ay, int bx, int by, TGAImage &framebuffer, TGAColor color) noexcept {
@@ -66,46 +56,20 @@ inline void draw_line(int ax, int ay, int bx, int by, TGAImage &framebuffer, TGA
     }
 }
 
-inline const mat4 viewport(const int x, const int y, const int w, const int h) {
-    return {{{(float)(w/2.), 0, 0, (float)(x+w/2.)}, {0, (float)(h/2.), 0, (float)(y+h/2.)}, {0,0,1,0}, {0,0,0,1}}};
+inline const mat<4, 4> viewport(const int x, const int y, const int w, const int h) {
+    return {{{(w/2.), 0, 0, (x+w/2.)}, {0, (h/2.), 0, (y+h/2.)}, {0,0,1,0}, {0,0,0,1}}};
 }
 
-inline const mat4 perspective(const double f) {
+inline const mat<4, 4> perspective(const double f) {
     return {{{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {0,0, (float)(-1/f),1}}};
 }
 
-inline void filled_triangle(int ax, int ay, int az, int bx, int by, int bz, int cx, int cy, int cz, TGAImage &framebuffer, std::vector<float> &zbuffer, const int width, const int height, TGAColor color) {
-    int min_x = std::min(std::min(ax, bx), cx);
-    int max_x = std::max(std::max(ax, bx), cx);
-    int min_y = std::min(std::min(ay, by), cy);
-    int max_y = std::max(std::max(ay, by), cy);
+inline const mat<4, 4> lookat(const vec3 eye, const vec3 center, const vec3 up) {
+    vec3 n = normalized(eye-center);
+    vec3 l = normalized(cross(up,n));
+    vec3 m = normalized(cross(n, l));
+    auto res = mat<4,4>{{{l.x,l.y,l.z,0}, {m.x,m.y,m.z,0}, {n.x,n.y,n.z,0}, {0,0,0,1}}} *
+                mat<4,4>{{{1,0,0,-center.x}, {0,1,0,-center.y}, {0,0,1,-center.z}, {0,0,0,1}}};
 
-    const double total_area = triangle_area(ax, ay, bx, by, cx, cy);
-
-    if (total_area < 1) return;
-
-    #pragma omp parallel for
-    for (int x = min_x; x <= max_x; ++x) {
-        for (int y = min_y; y <= max_y; ++y) {
-
-            // for checking if the point is in the triangle
-            const double a = triangle_area(x, y, bx, by, cx, cy) / total_area;
-            const double b = triangle_area(ax, ay, x, y, cx, cy) / total_area;
-            const double c = triangle_area(ax, ay, bx, by, x, y) / total_area;
-
-            if (a < 0 || b < 0 || c < 0) {
-                continue;
-            }
-            
-            float z = static_cast<float>(a * az + b * bz + c * cz);
-
-            const auto idx = x + y * width;
-
-            if (z <= zbuffer[idx]) continue;
-            
-            memcpy(zbuffer.data() + idx, &z, sizeof(float));
-
-            framebuffer.set(x, y, color);
-        }
-    }    
+    return res;
 }

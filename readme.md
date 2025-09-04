@@ -56,3 +56,8 @@ Applying rotation later helped abit but still clipping abit
 Store z buffer as a vector of floats instead
 
 ![Diablo model](progress/day5-3.png)
+
+### Day 6
+Use linear transformations to transform model now
+
+![Matrix transform](progress/day6-1.png)
