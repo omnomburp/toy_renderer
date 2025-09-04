@@ -25,6 +25,9 @@ struct model {
             for (int i = 0; i < model_face_size; ++i) {
                 const auto face = &faces[i * 3];
                 vec3 coords[3] = { vertices[*face], vertices[*(face + 1)], vertices[*(face + 2)]};
+
+                mat4 view_port, model_view, perspective;
+
                 auto [ax, ay, az] = project(rot(persp(coords[0])), width, height);
                 auto [bx, by, bz] = project(rot(persp(coords[1])), width, height);
                 auto [cx, cy, cz] = project(rot(persp(coords[2])), width, height);

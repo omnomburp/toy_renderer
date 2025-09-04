@@ -10,6 +10,7 @@
 
 #define tup(...) std::tuple<__VA_ARGS__>
 #define create_tup(...) std::make_tuple(__VA_ARGS__)
+#define PI 3.14159265358979323846
 
 inline double triangle_area(int ax, int ay, int bx, int by, int cx, int cy) {
     return .5*((by - ay) * (bx + ax) + (cy - by) * (cx + bx) + (ay - cy) * (ax + cx));
@@ -22,7 +23,7 @@ inline void swap(int &a, int &b) noexcept {
 }
 
 inline vec3 rot(vec3 v) noexcept {
-    constexpr double a = 3.14159265358979323846 / 6.0;
+    constexpr double a = PI / 6.0;
     const mat3 ry = {{{ (float)std::cos(a), 0, (float)std::sin(a)}, {0,1,0}, { (float)-std::sin(a), 0, (float)std::cos(a)}}};
 
     return ry * v;
@@ -63,6 +64,14 @@ inline void draw_line(int ax, int ay, int bx, int by, TGAImage &framebuffer, TGA
         y += (by > ay ? 1 : -1) * mask;
         error -= 2 * (bx - ax) * mask;
     }
+}
+
+inline const mat4 viewport(const int x, const int y, const int w, const int h) {
+    return {{{(float)(w/2.), 0, 0, (float)(x+w/2.)}, {0, (float)(h/2.), 0, (float)(y+h/2.)}, {0,0,1,0}, {0,0,0,1}}};
+}
+
+inline const mat4 perspective(const double f) {
+    return {{{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {0,0, (float)(-1/f),1}}};
 }
 
 inline void filled_triangle(int ax, int ay, int az, int bx, int by, int bz, int cx, int cy, int cz, TGAImage &framebuffer, std::vector<float> &zbuffer, const int width, const int height, TGAColor color) {
