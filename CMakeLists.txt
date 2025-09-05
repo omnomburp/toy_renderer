@@ -16,4 +16,5 @@ endif()
 add_executable(toy-renderer
     src/main.cpp
     src/tgaimage.cpp
+    src/our_gl.cpp
 )

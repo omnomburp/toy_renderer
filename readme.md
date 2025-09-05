@@ -61,3 +61,8 @@ Store z buffer as a vector of floats instead
 Use linear transformations to transform model now
 
 ![Matrix transform](progress/day6-1.png)
+
+### Day 7
+Playing around with lighting
+
+![Diablo phong](progress/day7-1.png)

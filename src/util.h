@@ -55,21 +55,3 @@ inline void draw_line(int ax, int ay, int bx, int by, TGAImage &framebuffer, TGA
         error -= 2 * (bx - ax) * mask;
     }
 }
-
-inline const mat<4, 4> viewport(const int x, const int y, const int w, const int h) {
-    return {{{(w/2.), 0, 0, (x+w/2.)}, {0, (h/2.), 0, (y+h/2.)}, {0,0,1,0}, {0,0,0,1}}};
-}
-
-inline const mat<4, 4> perspective(const double f) {
-    return {{{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {0,0, (float)(-1/f),1}}};
-}
-
-inline const mat<4, 4> lookat(const vec3 eye, const vec3 center, const vec3 up) {
-    vec3 n = normalized(eye-center);
-    vec3 l = normalized(cross(up,n));
-    vec3 m = normalized(cross(n, l));
-    auto res = mat<4,4>{{{l.x,l.y,l.z,0}, {m.x,m.y,m.z,0}, {n.x,n.y,n.z,0}, {0,0,0,1}}} *
-                mat<4,4>{{{1,0,0,-center.x}, {0,1,0,-center.y}, {0,0,1,-center.z}, {0,0,0,1}}};
-
-    return res;
-}

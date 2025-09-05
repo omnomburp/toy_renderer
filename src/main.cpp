@@ -1,78 +1,74 @@
-#include "util.h"
-
-#include "model.h"
 #include <cstdint>
+#include <cstdlib>
+#include "our_gl.h"
+#include "model.h"
+#include "types.h"
 
-constexpr TGAColor white =  {.bgra = {255, 255, 255, 255 }};
-constexpr TGAColor green =  {.bgra = {0, 255, 0, 255 }};
-constexpr TGAColor red =  {.bgra = {0, 0, 255, 255 }};
-constexpr TGAColor blue =  {.bgra = {255, 128, 64, 255 }};
-constexpr TGAColor yellow =  {.bgra = {0, 200, 255, 255 }};
-constexpr int width = 800;
-constexpr int height = 800;
+extern mat<4,4> ModelView, Perspective;
 
-mat<4,4> model_view, view_port, persp;
+struct PhongShader : IShader {
+    vec3 l;
+    vec3 triangle[3];
+    Model model;
 
-void rasterize(const vec4 clip[3], std::vector<double> &zbuffer, TGAImage &framebuffer, const TGAColor color) {
-    vec4 ndc[3]    = { clip[0]/clip[0].w, clip[1]/clip[1].w, clip[2]/clip[2].w };                
-    vec2 screen[3] = { (view_port*ndc[0]).xy(), (view_port*ndc[1]).xy(), (view_port*ndc[2]).xy() }; 
+    PhongShader(const vec3& light, Model& model) : model(model) {
+        vec4 l4 = { light.x, light.y, light.z, 1.}; // turn light to a vec4
+        l = normalized((ModelView * l4).xyz());   // get the direction of the light vector
+    }
 
-    mat<3,3> abc = {{ {screen[0].x, screen[0].y, 1.}, {screen[1].x, screen[1].y, 1.}, {screen[2].x, screen[2].y, 1.} }};
-    if (abc.det()<1) return; 
+    virtual std::pair<bool,TGAColor> fragment(const vec3 bar) const {
+        TGAColor gl_FragColor = {255, 255, 255, 255};     
+        vec3 n = normalized(cross(triangle[1] - triangle[0], triangle[2] - triangle[0]));
+        vec3 r = normalized(n * (n * l)*2 - l);                   
+        double ambient = .3;                                      
+        double diff = std::max(0., n * l);                        
+        double spec = std::pow(std::max(r.z, 0.), 35);            
+        for (int channel : {0,1,2})
+            gl_FragColor[channel] *= std::min(1., ambient + .4*diff + 1.9*spec);
+        return {false, gl_FragColor};
+    }
 
-    auto [min_x, max_x] = std::minmax({screen[0].x, screen[1].x, screen[2].x}); 
-    auto [min_y, max_y] = std::minmax({screen[0].y, screen[1].y, screen[2].y}); 
+    virtual vec4 vertex(const int face, const int n) {
+        auto vertex = model.vert(face, n);
+        vec4 gl_Position = ModelView * vec4{vertex.x, vertex.y, vertex.z, 1.}; // eye coordinates
 
-#pragma omp parallel for
-        for (int x=std::max<int>(min_x, 0); x<=std::min<int>(max_x, framebuffer.width()-1); x++) { 
-            for (int y=std::max<int>(min_y, 0); y<=std::min<int>(max_y, framebuffer.height()-1); y++) {
-                vec3 bc = abc.invert_transpose() * vec3{static_cast<double>(x), static_cast<double>(y), 1.}; 
-                if (bc.x<0 || bc.y<0 || bc.z<0) continue;                                                    
-                double z = bc * vec3{ ndc[0].z, ndc[1].z, ndc[2].z };
+        triangle[n] = gl_Position.xyz();
+        return Perspective * gl_Position; // clip coordinates
+    }
+};
 
-                if (z <= zbuffer[x+y*framebuffer.width()]) continue;
 
-                zbuffer[x+y*framebuffer.width()] = z;
-
-                framebuffer.set(x, y, color);
-            }
-        }
-}
-
-int main() {
-    TGAImage framebuffer(width, height, TGAImage::RGB);
-    
-    constexpr vec3    eye{-1,0,2}; 
-    constexpr vec3 center{0,0,0};  
-    constexpr vec3     up{0,1,0};  
-
-    model_view = lookat(eye, center, up);                              
-    persp = perspective(norm(eye-center));                        
-    view_port = viewport(width/16, height/16, width*7/8, height*7/8); 
-    
-    model model;
-
-    if (!model.load_model("obj\\diablo3_pose.obj")) {
-        std::cout << "model not loaded" << std::endl;
+int main(int argc, char** argv) {
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " obj/model.obj" << std::endl;
         return 1;
     }
 
-    std::vector<double> zbuffer(width*height, -std::numeric_limits<double>::max());
+    constexpr int width  = 800;      // output image size
+    constexpr int height = 800;
+    constexpr vec3  light{-1, -1, -1};
+    constexpr vec3    eye{-1, 0, 2}; // camera position
+    constexpr vec3 center{ 0, 0, 0}; // camera direction
+    constexpr vec3     up{ 0, 1, 0}; // camera up vector
 
-    const int size = model.faces.size() / 3;
-    for (int i = 0; i < size; ++i) {
-        vec4 clip[3];
-        for (int d : {0,1,2}) {            // assemble the primitive
-            vec3 v = model.vertices[model.faces[i*3+d]];
-            clip[d] = persp * model_view * vec4{v.x, v.y, v.z, 1.};
+    lookat(eye, center, up);                                   // build the ModelView   matrix
+    init_perspective(norm(eye-center));                        // build the Perspective matrix
+    init_viewport(width/16, height/16, width*7/8, height*7/8); // build the Viewport    matrix
+    init_zbuffer(width, height);
+
+    TGAImage framebuffer(width, height, TGAImage::RGB, {0, 0, 0, 255});
+
+    for (int m=1; m<argc; m++) {                    // iterate through all input objects
+        Model model(argv[m]);
+        PhongShader shader(light, model);                       // load the data
+        for (int f=0; f<model.nfaces(); f++) {      // iterate through all facets
+            Triangle clip = { shader.vertex(f, 0),  // assemble the primitive
+                              shader.vertex(f, 1),
+                              shader.vertex(f, 2) };
+            rasterize(clip, shader, framebuffer);   // rasterize the primitive
         }
-        TGAColor rnd;
-        for (int c=0; c<3; c++) rnd[c] = std::rand()%255;
-        rasterize(clip, zbuffer, framebuffer, rnd);
     }
 
-
     framebuffer.write_tga_file("framebuffer.tga");
-
     return 0;
 }
