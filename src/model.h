@@ -6,6 +6,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <array>
 
 #include "tgaimage.h"
 #include "util.h"
@@ -13,7 +14,9 @@
 
 struct Model {
     std::vector<vec3> vertices;
-    std::vector<int> faces;
+    std::vector<vec3> normals;
+    std::vector<std::array<int, 2>> faces;
+    
 
     Model(const std::string& file_path) {
         std::ifstream file(file_path);
@@ -46,12 +49,41 @@ struct Model {
                 iss >> f >> v1 >> v2 >> v3;
 
                 auto parse_index = [](const std::string& token) {
-                    return std::stoi(token.substr(0, token.find('/')));
+                    constexpr char key = '/';
+
+                    int count, prev_index;
+                    std::array<int, 2> res;
+                    
+                    for (int i = 0; i < token.size(); ++i) {
+                        if (token[i] == key) {
+                            if (count == 0) {
+                                res[0] = std::stoi(token.substr(0, i)) - 1;
+                            } else if (count == 1) {
+                                res[1] = std::stoi(token.substr(i + 1, token.size() - 1)) - 1;
+                            }
+
+                            ++count;
+                        }
+                    }
+
+                    return res;
                 };
 
-                faces.push_back(parse_index(v1) - 1);
-                faces.push_back(parse_index(v2) - 1);
-                faces.push_back(parse_index(v3) - 1);
+                // -1 due to the file format storing indexes
+                faces.push_back(parse_index(v1));
+                faces.push_back(parse_index(v2));
+                faces.push_back(parse_index(v3));
+
+            } else if (line.rfind("vn", 0) == 0) {
+                char vn;
+                float x, y, z;
+                iss >> vn >> x >> y >> z;
+                vec3 normal = {
+                    x,
+                    y,
+                    z
+                };
+                normals.emplace_back(normal);
             }
         }
     }
@@ -64,7 +96,7 @@ struct Model {
     }
 
     inline vec3 vert(const int iface, const int nthvert) const {
-        return vertices[faces[iface*3+nthvert]];
+        return vertices[faces[iface*3+nthvert][0]];
     }
 
 private:
