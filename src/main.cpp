@@ -9,6 +9,7 @@ extern mat<4,4> ModelView, Perspective;
 struct PhongShader : IShader {
     vec3 l;
     vec3 triangle[3];
+    vec3 nrm[3];
     Model model;
 
     PhongShader(const vec3& light, Model& model) : model(model) {
@@ -18,18 +19,20 @@ struct PhongShader : IShader {
 
     virtual std::pair<bool,TGAColor> fragment(const vec3 bar) const {
         TGAColor gl_FragColor = {255, 255, 255, 255};     
-        vec3 n = normalized(cross(triangle[1] - triangle[0], triangle[2] - triangle[0]));
+        vec3 n = normalized(nrm[0] * bar[0] + nrm[1] * bar[1] + nrm[2] * bar[2]);
         vec3 r = normalized(n * (n * l)*2 - l);                   
         double ambient = .3;                                      
         double diff = std::max(0., n * l);                        
         double spec = std::pow(std::max(r.z, 0.), 35);            
         for (int channel : {0,1,2})
-            gl_FragColor[channel] *= std::min(1., ambient + .4*diff + 1.9*spec);
+            gl_FragColor[channel] *= std::min(1., ambient + .4*diff + .9*spec);
         return {false, gl_FragColor};
     }
 
     virtual vec4 vertex(const int face, const int n) {
         auto vertex = model.vert(face, n);
+        auto normal = model.normal(face, n);
+        nrm[n] = (ModelView.invert_transpose() * vec4{normal.x, normal.y, normal.z, 0.}).xyz();
         vec4 gl_Position = ModelView * vec4{vertex.x, vertex.y, vertex.z, 1.}; // eye coordinates
 
         triangle[n] = gl_Position.xyz();
@@ -46,7 +49,7 @@ int main(int argc, char** argv) {
 
     constexpr int width  = 800;      // output image size
     constexpr int height = 800;
-    constexpr vec3  light{-1, -1, -1};
+    constexpr vec3  light{1, 1, 1};
     constexpr vec3    eye{-1, 0, 2}; // camera position
     constexpr vec3 center{ 0, 0, 0}; // camera direction
     constexpr vec3     up{ 0, 1, 0}; // camera up vector

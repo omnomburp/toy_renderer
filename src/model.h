@@ -51,7 +51,7 @@ struct Model {
                 auto parse_index = [](const std::string& token) {
                     constexpr char key = '/';
 
-                    int count, prev_index;
+                    int count;
                     std::array<int, 2> res;
                     
                     for (int i = 0; i < token.size(); ++i) {
@@ -97,6 +97,10 @@ struct Model {
 
     inline vec3 vert(const int iface, const int nthvert) const {
         return vertices[faces[iface*3+nthvert][0]];
+    }
+
+    inline vec3 normal(const int iface, const int nthvert) const {
+        return vertices[faces[iface*3+nthvert][1]];
     }
 
 private:

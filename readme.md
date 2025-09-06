@@ -66,3 +66,8 @@ Use linear transformations to transform model now
 Playing around with lighting
 
 ![Diablo phong](progress/day7-1.png)
+
+### Day 8
+Include vertex normals from obj file to smooth triangles
+
+![Smooth diablo](progress/day8-1.png)
