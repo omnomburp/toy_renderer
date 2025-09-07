@@ -15,6 +15,7 @@
 struct Model {
     std::vector<vec3> vertices;
     std::vector<vec3> normals;
+    std::vector<vec3> textures;
     std::vector<std::array<int, 2>> faces;
     
 
@@ -84,6 +85,18 @@ struct Model {
                     z
                 };
                 normals.emplace_back(normal);
+            } else if (line.rfind("vt", 0) == 0) {
+                char vt;
+                float x, y, z;
+
+                iss >> vt >> x >> y >> z;
+                vec3 texture {
+                    x,
+                    y,
+                    z
+                };
+
+                textures.emplace_back(texture);
             }
         }
     }
