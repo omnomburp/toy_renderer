@@ -80,3 +80,7 @@ Normal mapping
 Diffuse color + Specular textures, specular textures kinda jank though
 
 ![Colored Diablo](progress/day9-2.png)
+
+Fix specular highlights
+
+![Diablo](progress/day9-3.png)

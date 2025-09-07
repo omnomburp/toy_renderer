@@ -8,8 +8,6 @@ extern mat<4,4> ModelView, Perspective;
 
 struct PhongShader : IShader {
     vec4 l;
-    // vec3 triangle[3];
-    // vec3 nrm[3];
     vec2 varying_uv[3];
     const Model& model;
 
@@ -23,11 +21,12 @@ struct PhongShader : IShader {
         TGAColor gl_FragColor = model.diff(uv);     
         vec4 n = normalized(ModelView.invert_transpose() * model.normal(uv));
         vec4 r = normalized(n * (n * l)*2 - l);                   // reflected light direction                   
-        double ambient = .3;                                      
-        double diff = std::max(0., n * l);                        
-        double spec = std::pow(std::max(r.z, 0.) * (model.spec(uv) * model.spec(uv)), 35);            
+        double ambient  = .4;                                     // ambient light intensity
+        double diff  = std::max(0., n * l);                   // diffuse light intensity                        
+        auto spec_highlight = model.spec(uv);            
+        double spec = std::pow(std::max(r.z, 0.), 35);
         for (int channel : {0,1,2})
-            gl_FragColor[channel] *= std::min(1., ambient + .4*diff + .6*spec);
+            gl_FragColor[channel] = std::min<int>(255, gl_FragColor[channel] * (ambient + diff + (spec * spec_highlight[channel])));
         return {false, gl_FragColor};
     }
 

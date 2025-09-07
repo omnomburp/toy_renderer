@@ -142,7 +142,7 @@ struct Model {
 
     inline vec4 spec(const vec2& uv) const {
         TGAColor c = specmap.get(uv[0]*specmap.width(), uv[1]*specmap.height());
-        return vec4{(double)c[2],(double)c[1],(double)c[0],0}*2./255. - vec4{1,1,1,0};
+        return vec4{(double)c[2],(double)c[1],(double)c[0],0}/255.;
     }
 
     inline vec2 uv(const int iface, const int nthvert) const {
