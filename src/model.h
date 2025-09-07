@@ -20,6 +20,8 @@ struct Model {
     std::vector<int> facet_nrm = {}; 
     std::vector<int> facet_tex = {}; 
     TGAImage normalmap         = {};
+    TGAImage diffmap           = {};
+    TGAImage specmap           = {};
 
     Model(const std::string& file_path) {
         std::ifstream file(file_path);
@@ -107,7 +109,10 @@ struct Model {
             std::string texfile = file_path.substr(0,dot) + suffix;
             std::cerr << "texture file " << texfile << " loading " << (img.read_tga_file(texfile.c_str()) ? "ok" : "failed") << std::endl;
         };
+
         load_texture("_nm.tga", normalmap);
+        load_texture("_diffuse.tga", diffmap);
+        load_texture("_spec.tga", specmap);
     }
 
     inline int nverts() const { return vertices.size(); }
@@ -127,6 +132,16 @@ struct Model {
 
     inline vec4 normal(const vec2& uv) const {
         TGAColor c = normalmap.get(uv[0]*normalmap.width(), uv[1]*normalmap.height());
+        return vec4{(double)c[2],(double)c[1],(double)c[0],0}*2./255. - vec4{1,1,1,0};
+    }
+
+    inline TGAColor diff(const vec2& uv) const {
+        TGAColor c = diffmap.get(uv[0]*diffmap.width(), uv[1]*diffmap.height());
+        return c;
+    }
+
+    inline vec4 spec(const vec2& uv) const {
+        TGAColor c = specmap.get(uv[0]*specmap.width(), uv[1]*specmap.height());
         return vec4{(double)c[2],(double)c[1],(double)c[0],0}*2./255. - vec4{1,1,1,0};
     }
 

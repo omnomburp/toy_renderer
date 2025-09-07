@@ -19,25 +19,19 @@ struct PhongShader : IShader {
     }
 
     virtual std::pair<bool,TGAColor> fragment(const vec3 bar) const {
-        TGAColor gl_FragColor = {255, 255, 255, 255};     
         vec2 uv = varying_uv[0] * bar[0] + varying_uv[1] * bar[1] + varying_uv[2] * bar[2];
+        TGAColor gl_FragColor = model.diff(uv);     
         vec4 n = normalized(ModelView.invert_transpose() * model.normal(uv));
         vec4 r = normalized(n * (n * l)*2 - l);                   // reflected light direction                   
         double ambient = .3;                                      
         double diff = std::max(0., n * l);                        
-        double spec = std::pow(std::max(r.z, 0.), 35);            
+        double spec = std::pow(std::max(r.z, 0.) * (model.spec(uv) * model.spec(uv)), 35);            
         for (int channel : {0,1,2})
-            gl_FragColor[channel] *= std::min(1., ambient + .4*diff + .9*spec);
+            gl_FragColor[channel] *= std::min(1., ambient + .4*diff + .6*spec);
         return {false, gl_FragColor};
     }
 
     virtual vec4 vertex(const int face, const int n) {
-        // auto vertex = model.vert(face, n);
-        // auto normal = model.normal(face, n);
-        // nrm[n] = (ModelView.invert_transpose() * vec4{normal.x, normal.y, normal.z, 0.}).xyz();
-        // vec4 gl_Position = ModelView * vec4{vertex.x, vertex.y, vertex.z, 1.}; // eye coordinates
-
-        // triangle[n] = gl_Position.xyz();
         varying_uv[n] = model.uv(face, n);
         vec4 gl_Position = ModelView * model.vert(face, n);
         return Perspective * gl_Position; // clip coordinates

@@ -74,4 +74,9 @@ Include vertex normals from obj file to smooth triangles
 
 ### Day 9
 Normal mapping
+
 ![Diablo](progress/day9-1.png)
+
+Diffuse color + Specular textures, specular textures kinda jank though
+
+![Colored Diablo](progress/day9-2.png)
