@@ -13,11 +13,13 @@
 #include "types.h"
 
 struct Model {
-    std::vector<vec3> vertices;
-    std::vector<vec3> normals;
-    std::vector<vec3> textures;
-    std::vector<std::array<int, 2>> faces;
-    
+    std::vector<vec4> vertices = {};
+    std::vector<vec4> normals  = {};
+    std::vector<vec2> textures = {};
+    std::vector<int> facet_vrt = {}; 
+    std::vector<int> facet_nrm = {}; 
+    std::vector<int> facet_tex = {}; 
+    TGAImage normalmap         = {};
 
     Model(const std::string& file_path) {
         std::ifstream file(file_path);
@@ -37,10 +39,11 @@ struct Model {
                 float x, y, z;
                 iss >> v >> x >> y >> z;
 
-                vec3 vertex = {
+                vec4 vertex = {
                     x,
                     y,
-                    z
+                    z,
+                    1.
                 };
                 vertices.emplace_back(vertex);
 
@@ -49,71 +52,86 @@ struct Model {
                 std::string v1, v2, v3;
                 iss >> f >> v1 >> v2 >> v3;
 
-                auto parse_index = [](const std::string& token) {
+                auto parse_index = [this](const std::string& token) {
                     constexpr char key = '/';
 
-                    int count;
-                    std::array<int, 2> res;
+                    int count = 0, prev_index = 0;
                     
                     for (int i = 0; i < token.size(); ++i) {
                         if (token[i] == key) {
                             if (count == 0) {
-                                res[0] = std::stoi(token.substr(0, i)) - 1;
+                                facet_vrt.push_back(std::stoi(token.substr(prev_index, i)) - 1);
+                                prev_index = i;
                             } else if (count == 1) {
-                                res[1] = std::stoi(token.substr(i + 1, token.size() - 1)) - 1;
+                                facet_tex.push_back(std::stoi(token.substr(prev_index + 1, i - prev_index + 1)) - 1);
+                                facet_nrm.push_back(std::stoi(token.substr(i + 1, token.size() - i + 1)) - 1);
                             }
 
                             ++count;
                         }
                     }
-
-                    return res;
                 };
 
                 // -1 due to the file format storing indexes
-                faces.push_back(parse_index(v1));
-                faces.push_back(parse_index(v2));
-                faces.push_back(parse_index(v3));
+                parse_index(v1);
+                parse_index(v2);
+                parse_index(v3);
 
             } else if (line.rfind("vn", 0) == 0) {
                 char vn;
                 float x, y, z;
-                iss >> vn >> x >> y >> z;
-                vec3 normal = {
+                iss >> vn >> vn >> x >> y >> z;
+                vec4 normal = {
                     x,
                     y,
-                    z
+                    z,
                 };
                 normals.emplace_back(normal);
             } else if (line.rfind("vt", 0) == 0) {
                 char vt;
                 float x, y, z;
 
-                iss >> vt >> x >> y >> z;
-                vec3 texture {
+                iss >> vt >> vt >> x >> y >> z;
+                vec2 texture {
                     x,
-                    y,
-                    z
+                    1. - y,
                 };
 
                 textures.emplace_back(texture);
             }
         }
+
+        auto load_texture = [&file_path](const std::string suffix, TGAImage &img) {
+            size_t dot = file_path.find_last_of(".");
+            if (dot==std::string::npos) return;
+            std::string texfile = file_path.substr(0,dot) + suffix;
+            std::cerr << "texture file " << texfile << " loading " << (img.read_tga_file(texfile.c_str()) ? "ok" : "failed") << std::endl;
+        };
+        load_texture("_nm.tga", normalmap);
     }
 
     inline int nverts() const { return vertices.size(); }
-    inline int nfaces() const { return faces.size()/3; }
+    inline int nfaces() const { return facet_vrt.size()/3; }
 
-    inline vec3 vert(const int i) const {
+    inline vec4 vert(const int i) const {
         return vertices[i];
     }
 
-    inline vec3 vert(const int iface, const int nthvert) const {
-        return vertices[faces[iface*3+nthvert][0]];
+    inline vec4 vert(const int iface, const int nthvert) const {
+        return vertices[facet_vrt[iface*3+nthvert]];
     }
 
-    inline vec3 normal(const int iface, const int nthvert) const {
-        return vertices[faces[iface*3+nthvert][1]];
+    inline vec4 normal(const int iface, const int nthvert) const {
+        return vertices[facet_nrm[iface*3+nthvert]];
+    }
+
+    inline vec4 normal(const vec2& uv) const {
+        TGAColor c = normalmap.get(uv[0]*normalmap.width(), uv[1]*normalmap.height());
+        return vec4{(double)c[2],(double)c[1],(double)c[0],0}*2./255. - vec4{1,1,1,0};
+    }
+
+    inline vec2 uv(const int iface, const int nthvert) const {
+        return textures[facet_tex[iface*3+nthvert]];
     }
 
 private:

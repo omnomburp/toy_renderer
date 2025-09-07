@@ -7,20 +7,22 @@
 extern mat<4,4> ModelView, Perspective;
 
 struct PhongShader : IShader {
-    vec3 l;
-    vec3 triangle[3];
-    vec3 nrm[3];
-    Model model;
+    vec4 l;
+    // vec3 triangle[3];
+    // vec3 nrm[3];
+    vec2 varying_uv[3];
+    const Model& model;
 
     PhongShader(const vec3& light, Model& model) : model(model) {
         vec4 l4 = { light.x, light.y, light.z, 1.}; // turn light to a vec4
-        l = normalized((ModelView * l4).xyz());   // get the direction of the light vector
+        l = normalized((ModelView * l4));   // get the direction of the light vector
     }
 
     virtual std::pair<bool,TGAColor> fragment(const vec3 bar) const {
         TGAColor gl_FragColor = {255, 255, 255, 255};     
-        vec3 n = normalized(nrm[0] * bar[0] + nrm[1] * bar[1] + nrm[2] * bar[2]);
-        vec3 r = normalized(n * (n * l)*2 - l);                   
+        vec2 uv = varying_uv[0] * bar[0] + varying_uv[1] * bar[1] + varying_uv[2] * bar[2];
+        vec4 n = normalized(ModelView.invert_transpose() * model.normal(uv));
+        vec4 r = normalized(n * (n * l)*2 - l);                   // reflected light direction                   
         double ambient = .3;                                      
         double diff = std::max(0., n * l);                        
         double spec = std::pow(std::max(r.z, 0.), 35);            
@@ -30,12 +32,14 @@ struct PhongShader : IShader {
     }
 
     virtual vec4 vertex(const int face, const int n) {
-        auto vertex = model.vert(face, n);
-        auto normal = model.normal(face, n);
-        nrm[n] = (ModelView.invert_transpose() * vec4{normal.x, normal.y, normal.z, 0.}).xyz();
-        vec4 gl_Position = ModelView * vec4{vertex.x, vertex.y, vertex.z, 1.}; // eye coordinates
+        // auto vertex = model.vert(face, n);
+        // auto normal = model.normal(face, n);
+        // nrm[n] = (ModelView.invert_transpose() * vec4{normal.x, normal.y, normal.z, 0.}).xyz();
+        // vec4 gl_Position = ModelView * vec4{vertex.x, vertex.y, vertex.z, 1.}; // eye coordinates
 
-        triangle[n] = gl_Position.xyz();
+        // triangle[n] = gl_Position.xyz();
+        varying_uv[n] = model.uv(face, n);
+        vec4 gl_Position = ModelView * model.vert(face, n);
         return Perspective * gl_Position; // clip coordinates
     }
 };

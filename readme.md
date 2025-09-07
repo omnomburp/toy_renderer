@@ -71,3 +71,7 @@ Playing around with lighting
 Include vertex normals from obj file to smooth triangles
 
 ![Smooth diablo](progress/day8-1.png)
+
+### Day 9
+Normal mapping
+![Diablo](progress/day9-1.png)
